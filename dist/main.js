@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",()=>{const e=document.getElementById("app-title"),t=document.getElementById("app-message");e&&(e.textContent="WeighTrack"),t&&(t.textContent="Your tracking app is ready.")});
