@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WeighTrack</title>
+    <link rel="stylesheet" href="style.css" />
+    <!-- Chart.js CDN for interactive graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <!-- AUTH SECTION -->
+    <div id="auth-card" class="auth-card">
+      <div class="brand">
+        <h1>WeighTrack</h1>
+        <p>Track your weight easily</p>
+      </div>
+
+      <div id="auth-message" class="auth-message hidden"></div>
+
+      <div id="auth-section">
+        <div class="tab-container">
+          <button id="tab-login" class="tab-btn active">Log In</button>
+          <button id="tab-signup" class="tab-btn">Sign Up</button>
+        </div>
+
+        <form id="form-login" class="auth-form">
+          <div class="input-group">
+            <input
+              type="email"
+              id="login-email"
+              placeholder="Email address"
+              required
+            />
+          </div>
+          <div class="input-group">
+            <input
+              type="password"
+              id="login-password"
+              placeholder="Password"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary">Log In</button>
+        </form>
+
+        <form id="form-signup" class="auth-form hidden">
+          <div class="input-row">
+            <div class="input-group">
+              <input
+                type="text"
+                id="signup-firstname"
+                placeholder="First Name"
+                required
+              />
+            </div>
+            <div class="input-group">
+              <input
+                type="text"
+                id="signup-lastname"
+                placeholder="Last Name"
+                required
+              />
+            </div>
+          </div>
+          <div class="input-group">
+            <input
+              type="email"
+              id="signup-email"
+              placeholder="Email address"
+              required
+            />
+          </div>
+          <div class="input-group">
+            <input
+              type="password"
+              id="signup-password"
+              placeholder="Password"
+              required
+            />
+          </div>
+          <div class="input-group">
+            <label class="input-label">Date of Birth</label>
+            <input type="date" id="signup-dob" required />
+          </div>
+          <div class="input-group">
+            <input
+              type="number"
+              id="signup-target-weight"
+              placeholder="Target Weight (kg)"
+              step="0.1"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary">Create Account</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MAIN APP SECTION (Visible when logged in) -->
+    <div id="app-section" class="app-container hidden">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="user-info">
+          <h1 id="user-greeting">Welcome back!</h1>
+        </div>
+        <div class="header-actions">
+          <button id="btn-edit-profile" class="btn-secondary">
+            Edit Profile
+          </button>
+          <button id="btn-logout" class="btn-logout">Log Out</button>
+        </div>
+      </header>
+
+      <!-- Edit Profile Modal -->
+      <div id="modal-edit-profile" class="modal hidden">
+        <div class="modal-content">
+          <h2>Edit Profile</h2>
+          <form id="form-edit-profile">
+            <div class="input-row">
+              <div class="form-group">
+                <label for="edit-first-name">First Name</label>
+                <input type="text" id="edit-first-name" required />
+              </div>
+              <div class="form-group">
+                <label for="edit-last-name">Last Name</label>
+                <input type="text" id="edit-last-name" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-email">Email</label>
+              <input type="email" id="edit-email" required />
+            </div>
+            <div class="form-group">
+              <label for="edit-password"
+                >New Password (leave blank to keep current)</label
+              >
+              <input
+                type="password"
+                id="edit-password"
+                placeholder="Min. 6 characters"
+                minlength="6"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="edit-dob">Date of Birth</label>
+              <input type="date" id="edit-dob" required />
+            </div>
+
+            <div class="form-group">
+              <label for="edit-target-weight">Desired Weight (kg)</label>
+              <input
+                type="number"
+                step="0.1"
+                id="edit-target-weight"
+                required
+              />
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" id="btn-cancel-edit" class="btn-secondary">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Edit Weight Modal (With Date & Weight Inputs) -->
+      <div id="modal-edit-weight" class="modal hidden">
+        <div class="modal-content">
+          <h2>Edit Weight Entry</h2>
+          <form id="form-edit-weight">
+            <input type="hidden" id="edit-weight-id" />
+
+            <div class="form-group">
+              <label for="edit-weight-date">Date</label>
+              <input type="date" id="edit-weight-date" required />
+            </div>
+
+            <div class="form-group">
+              <label for="edit-weight-input">Weight (kg)</label>
+              <input
+                type="number"
+                step="0.1"
+                id="edit-weight-input"
+                placeholder="e.g. 75.5"
+                required
+              />
+            </div>
+
+            <div class="modal-actions">
+              <button
+                type="button"
+                id="btn-cancel-edit-weight"
+                class="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Dashboard Cards -->
+      <section class="dashboard-cards">
+        <div class="card">
+          <h3>Desired Weight</h3>
+          <p id="dash-desired-weight">-- kg</p>
+        </div>
+        <div class="card">
+          <h3>Current Weight</h3>
+          <p id="dash-current-weight">-- kg</p>
+        </div>
+        <div class="card">
+          <h3>Distance from Goal</h3>
+          <p id="dash-progress">% --</p>
+        </div>
+        <div class="card">
+          <h3>Average Weight</h3>
+          <p id="dash-average-weight">-- kg</p>
+        </div>
+      </section>
+
+      <!-- Add Weight Form -->
+      <section class="section-card">
+        <h2>Log Weight</h2>
+        <form id="form-add-weight" class="weight-form">
+          <div class="input-group">
+            <label>Date</label>
+            <input type="date" id="weight-date" required />
+          </div>
+          <div class="input-group">
+            <label>Weight (kg)</label>
+            <input
+              type="number"
+              id="weight-input"
+              step="0.1"
+              placeholder="e.g. 75.5"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary">Add Entry</button>
+        </form>
+      </section>
+
+      <!-- Table Section with Date Filters -->
+      <section class="section-card">
+        <h2>Weight Log</h2>
+
+        <div class="filter-container">
+          <div class="input-group">
+            <label class="input-label" for="filter-start-date">From</label>
+            <input type="date" id="filter-start-date" />
+          </div>
+
+          <div class="input-group">
+            <label class="input-label" for="filter-end-date">To</label>
+            <input type="date" id="filter-end-date" />
+          </div>
+
+          <div class="filter-actions">
+            <button id="btn-apply-filter" class="btn-primary">Filter</button>
+            <button id="btn-reset-filter" class="btn-secondary">Reset</button>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Weight (kg)</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="weight-table-body">
+              <!-- Entries populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Graph Section with Time Shortcuts -->
+      <section class="section-card">
+        <h2>Progress Chart</h2>
+        <div class="chart-shortcuts">
+          <button class="btn-filter-chart" data-range="1m">1 Month</button>
+          <button class="btn-filter-chart" data-range="ytd">
+            Year to Date
+          </button>
+          <button class="btn-filter-chart" data-range="1y">1 Year</button>
+          <button class="btn-filter-chart active" data-range="all">
+            All Time
+          </button>
+        </div>
+        <div class="chart-container">
+          <canvas id="weightChart"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <script src="bundle.js"></script>
+  </body>
+</html>
