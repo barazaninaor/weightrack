@@ -16,6 +16,7 @@ let db;
 let currentUser = null;
 let weightEntries = [];
 let chartInstance = null;
+let entryIdToDelete = null;
 
 function formatDateToDisplay(dateString) {
   if (!dateString) return "";
@@ -34,6 +35,18 @@ export function initApp(appInstance, user) {
   const dateInput = document.getElementById("weight-date");
   if (dateInput) {
     dateInput.value = new Date().toISOString().split("T")[0];
+  }
+
+  const cachedData = localStorage.getItem(`weights_${currentUser.uid}`);
+  if (cachedData) {
+    try {
+      weightEntries = JSON.parse(cachedData);
+      updateDashboard();
+      renderTable(weightEntries);
+      renderChart(weightEntries);
+    } catch (e) {
+      console.error("Error parsing cached weights", e);
+    }
   }
 
   loadUserProfile();
@@ -81,10 +94,16 @@ function listenToWeightEntries() {
   const q = query(weightsRef, orderBy("date", "asc"));
 
   onSnapshot(q, (snapshot) => {
-    weightEntries = snapshot.docs.map((docSnap) => ({
+    const newEntries = snapshot.docs.map((docSnap) => ({
       id: docSnap.id,
       ...docSnap.data(),
     }));
+
+    weightEntries = newEntries;
+    localStorage.setItem(
+      `weights_${currentUser.uid}`,
+      JSON.stringify(weightEntries),
+    );
 
     updateDashboard();
     renderTable(weightEntries);
@@ -150,12 +169,11 @@ function renderTable(entries) {
   });
 
   tbody.querySelectorAll(".btn-delete").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
-      const entryId = e.currentTarget.getAttribute("data-id");
-      try {
-        await deleteDoc(doc(db, "users", currentUser.uid, "weights", entryId));
-      } catch (err) {
-        console.error("Error deleting document:", err);
+    btn.addEventListener("click", (e) => {
+      entryIdToDelete = e.currentTarget.getAttribute("data-id");
+      const modal = document.getElementById("modal-confirm-delete");
+      if (modal) {
+        modal.classList.remove("hidden");
       }
     });
   });
@@ -198,7 +216,6 @@ function renderChart(entries) {
   const isLargeDataset = entries.length > 50;
   const datasets = [];
 
-  // 1. Dataset המשקל הנמדד (עם אפקט הזוהר מהאקסל)
   datasets.push({
     label: "Weight (kg)",
     data: dataPoints,
@@ -215,7 +232,6 @@ function renderChart(entries) {
     shadowBlur: 10,
   });
 
-  // 2. Dataset קו היעד האופקי (Goal Line)
   if (currentUser?.targetWeight && entries.length > 0) {
     const targetValue = Number(currentUser.targetWeight);
     const targetData = new Array(entries.length).fill(targetValue);
@@ -233,7 +249,6 @@ function renderChart(entries) {
     });
   }
 
-  // פלאגין להוספת אפקט הזוהר (Glow) ב-Canvas
   const glowPlugin = {
     id: "glowPlugin",
     beforeDatasetDraw(chart, args) {
@@ -339,6 +354,44 @@ function setupEventListeners() {
         document.getElementById("weight-input").value = "";
       } catch (error) {
         console.error("Error adding weight:", error);
+      }
+    });
+  }
+
+  // מודל אישור מחיקה
+  const modalConfirmDelete = document.getElementById("modal-confirm-delete");
+  const btnCancelDelete = document.getElementById("btn-cancel-delete");
+  const btnConfirmDelete = document.getElementById("btn-confirm-delete");
+
+  if (btnCancelDelete) {
+    btnCancelDelete.addEventListener("click", () => {
+      if (modalConfirmDelete) modalConfirmDelete.classList.add("hidden");
+      entryIdToDelete = null;
+    });
+  }
+
+  if (modalConfirmDelete) {
+    modalConfirmDelete.addEventListener("click", (e) => {
+      if (e.target === modalConfirmDelete) {
+        modalConfirmDelete.classList.add("hidden");
+        entryIdToDelete = null;
+      }
+    });
+  }
+
+  if (btnConfirmDelete) {
+    btnConfirmDelete.addEventListener("click", async () => {
+      if (!entryIdToDelete) return;
+
+      try {
+        await deleteDoc(
+          doc(db, "users", currentUser.uid, "weights", entryIdToDelete),
+        );
+        if (modalConfirmDelete) modalConfirmDelete.classList.add("hidden");
+      } catch (err) {
+        console.error("Error deleting document:", err);
+      } finally {
+        entryIdToDelete = null;
       }
     });
   }
