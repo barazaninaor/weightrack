@@ -115,11 +115,15 @@ function updateDashboard() {
   const dashCurrent = document.getElementById("dash-current-weight");
   const dashProgress = document.getElementById("dash-progress");
   const dashAverage = document.getElementById("dash-average-weight");
+  const dashMin = document.getElementById("dash-min-weight");
+  const dashMax = document.getElementById("dash-max-weight");
 
   if (weightEntries.length === 0) {
     if (dashCurrent) dashCurrent.textContent = "-- kg";
     if (dashProgress) dashProgress.textContent = "% --";
     if (dashAverage) dashAverage.textContent = "-- kg";
+    if (dashMin) dashMin.textContent = "-- kg";
+    if (dashMax) dashMax.textContent = "-- kg";
     return;
   }
 
@@ -145,6 +149,18 @@ function updateDashboard() {
   const avgWeight = (totalWeight / weightEntries.length).toFixed(1);
   if (dashAverage) {
     dashAverage.textContent = `${avgWeight} kg`;
+  }
+
+  // חישוב משקל מינימלי ומקסימלי מתוך כלל הרשומות
+  const weightsArray = weightEntries.map((e) => e.weight);
+  const minWeight = Math.min(...weightsArray);
+  const maxWeight = Math.max(...weightsArray);
+
+  if (dashMin) {
+    dashMin.textContent = `${minWeight} kg`;
+  }
+  if (dashMax) {
+    dashMax.textContent = `${maxWeight} kg`;
   }
 }
 
