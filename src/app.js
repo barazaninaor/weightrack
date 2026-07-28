@@ -159,7 +159,7 @@ function renderTable(entries) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${formatDateToDisplay(entry.date)}</td>
-      <td>${entry.weight} kg</td>
+      <td>${entry.weight}</td>
       <td class="action-cells">
         <button class="btn-edit" data-id="${entry.id}" data-date="${entry.date}" data-weight="${entry.weight}">Edit</button>
         <button class="btn-delete" data-id="${entry.id}">Delete</button>
