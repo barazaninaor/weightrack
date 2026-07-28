@@ -111,12 +111,56 @@ function listenToWeightEntries() {
   });
 }
 
+// פונקציית עזר לחישוב שינוי באחוזים לפי מספר ימים אחורה מהמשקל האחרון
+function calculateWeightPercentageChange(entries, daysBack) {
+  if (entries.length < 2) return null;
+
+  const latestEntry = entries[entries.length - 1];
+  const latestDate = new Date(latestEntry.date);
+  
+  // חישוב תאריך היעד אחורה
+  const targetDate = new Date(latestDate);
+  targetDate.setDate(targetDate.getDate() - daysBack);
+
+  // חיפוש הרשומות שקרובות ביותר לתאריך היעד (או לפניו)
+  let pastEntry = null;
+  for (let i = entries.length - 2; i >= 0; i--) {
+    const entryDate = new Date(entries[i].date);
+    if (entryDate <= targetDate) {
+      pastEntry = entries[i];
+      break;
+    }
+  }
+
+  // אם לא נמצאו רשומות ישנות בדיוק בטווח, נבדוק את הרשומות הראשונות שקיימות בטווח הזמן
+  if (!pastEntry) {
+    const oldestInWindow = entries.filter(e => {
+      const d = new Date(e.date);
+      const diffTime = latestDate - d;
+      const diffDays = diffTime / (1000 * 60 * 60 * 24);
+      return diffDays <= daysBack;
+    });
+    
+    if (oldestInWindow.length > 1) {
+      pastEntry = oldestInWindow[0];
+    } else {
+      return null;
+    }
+  }
+
+  const diff = latestEntry.weight - pastEntry.weight;
+  const percentage = ((diff / pastEntry.weight) * 100).toFixed(2);
+  return Number(percentage);
+}
+
 function updateDashboard() {
   const dashCurrent = document.getElementById("dash-current-weight");
   const dashProgress = document.getElementById("dash-progress");
   const dashAverage = document.getElementById("dash-average-weight");
   const dashMin = document.getElementById("dash-min-weight");
   const dashMax = document.getElementById("dash-max-weight");
+  const dashWeekly = document.getElementById("dash-weekly-change");
+  const dashMonthly = document.getElementById("dash-monthly-change");
 
   if (weightEntries.length === 0) {
     if (dashCurrent) dashCurrent.textContent = "-- kg";
@@ -124,6 +168,8 @@ function updateDashboard() {
     if (dashAverage) dashAverage.textContent = "-- kg";
     if (dashMin) dashMin.textContent = "-- kg";
     if (dashMax) dashMax.textContent = "-- kg";
+    if (dashWeekly) dashWeekly.textContent = "% --";
+    if (dashMonthly) dashMonthly.textContent = "% --";
     return;
   }
 
@@ -151,7 +197,7 @@ function updateDashboard() {
     dashAverage.textContent = `${avgWeight} kg`;
   }
 
-  // חישוב משקל מינימלי ומקסימלי מתוך כלל הרשומות
+  // חישוב משקל מינימלי ומקסימלי
   const weightsArray = weightEntries.map((e) => e.weight);
   const minWeight = Math.min(...weightsArray);
   const maxWeight = Math.max(...weightsArray);
@@ -161,6 +207,27 @@ function updateDashboard() {
   }
   if (dashMax) {
     dashMax.textContent = `${maxWeight} kg`;
+  }
+
+  // חישוב והצגת שינוי שבועי (7 ימים) וחודשי (30 יום) באחוזים
+  const weeklyChangePct = calculateWeightPercentageChange(weightEntries, 7);
+  if (dashWeekly) {
+    if (weeklyChangePct !== null) {
+      const prefix = weeklyChangePct > 0 ? "+" : "";
+      dashWeekly.textContent = `${prefix}${weeklyChangePct}%`;
+    } else {
+      dashWeekly.textContent = "% --";
+    }
+  }
+
+  const monthlyChangePct = calculateWeightPercentageChange(weightEntries, 30);
+  if (dashMonthly) {
+    if (monthlyChangePct !== null) {
+      const prefix = monthlyChangePct > 0 ? "+" : "";
+      dashMonthly.textContent = `${prefix}${monthlyChangePct}%`;
+    } else {
+      dashMonthly.textContent = "% --";
+    }
   }
 }
 
